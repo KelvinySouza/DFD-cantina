@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DFD — Cantina Escolar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --card: #1a1e2a;
+    --border: #252b3b;
+    --accent: #f5c842;
+    --accent2: #4ecdc4;
+    --accent3: #ff6b6b;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --process: #1e3a5f;
+    --process-border: #4da6ff;
+    --entity: #2d1f4e;
+    --entity-border: #a78bfa;
+    --store: #1f3d2e;
+    --store-border: #4ecdc4;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BG */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(245,200,66,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,200,66,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* HEADER */
+  header { text-align: center; margin-bottom: 60px; }
+  header .label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+    display: block;
+  }
+  header h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #fff;
+  }
+  header h1 span { color: var(--accent); }
+  header p {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+
+  /* NAV TABS */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 10px 22px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    transition: all .2s;
+  }
+  .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* SECTION TITLE */
+  .sec-title {
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .sec-heading {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 32px;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .leg-box {
+    width: 26px; height: 18px; border-radius: 4px; border-width: 2px; border-style: solid; flex-shrink: 0;
+  }
+  .leg-circle { width: 22px; height: 22px; border-radius: 50%; border-width: 2px; border-style: solid; flex-shrink: 0; }
+
+  /* SVG DIAGRAMS */
+  .diagram-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    overflow-x: auto;
+    margin-bottom: 32px;
+  }
+  svg { display: block; margin: 0 auto; }
+
+  /* ELEMENTS LIST */
+  .elements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .el-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color .2s, transform .2s;
+  }
+  .el-card:hover { transform: translateY(-2px); }
+  .el-card.entity { border-left: 3px solid var(--entity-border); }
+  .el-card.process { border-left: 3px solid var(--process-border); }
+  .el-card.store   { border-left: 3px solid var(--store-border); }
+  .el-card.flow    { border-left: 3px solid var(--accent); }
+  .el-type {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .el-card.entity .el-type { color: var(--entity-border); }
+  .el-card.process .el-type { color: var(--process-border); }
+  .el-card.store   .el-type { color: var(--store-border); }
+  .el-card.flow    .el-type { color: var(--accent); }
+  .el-name { font-weight: 600; font-size: 15px; color: #fff; margin-bottom: 6px; }
+  .el-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .el-badge {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+  }
+  .el-card.entity .el-badge { background: #2d1f4e; color: var(--entity-border); }
+  .el-card.process .el-badge { background: #1e3a5f; color: var(--process-border); }
+  .el-card.store   .el-badge { background: #1f3d2e; color: var(--store-border); }
+  .el-card.flow    .el-badge { background: #3a2e00; color: var(--accent); }
+
+  /* EXPLANATION */
+  .explanation {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+    padding: 24px 28px;
+    line-height: 1.8;
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 32px;
+  }
+  .explanation strong { color: var(--accent); }
+
+  /* VALIDATION */
+  .validation-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .validation-list li {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 18px; font-size: 14px; color: var(--text);
+  }
+  .val-icon {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; margin-top: 1px;
+  }
+  .val-ok  { background: #1a3d2e; color: #4ecdc4; }
+  .val-ok::after { content: '✓'; }
+
+  /* CHALLENGE */
+  .challenge-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .challenge-card h3 {
+    font-size: 15px; font-weight: 700; color: var(--accent2); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .challenge-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .challenge-tag {
+    display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 11px;
+    font-family: 'Space Mono', monospace; background: #1f3d2e; color: var(--accent2); margin-top: 10px;
+  }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 36px 0; }
+
+  /* TOOLTIP HINT */
+  .hint {
+    font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace;
+    margin-bottom: 10px; letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <span class="label">Modelagem de Sistemas — DFD</span>
+    <h1>Sistema de <span>Cantina</span> Escolar</h1>
+    <p>Diagrama de Fluxo de Dados completo: Contexto, Nível 0, elementos identificados e validação.</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" onclick="switchTab('elementos')">① Elementos</button>
+    <button class="tab-btn" onclick="switchTab('contexto')">② Diagrama de Contexto</button>
+    <button class="tab-btn" onclick="switchTab('nivel0')">③ DFD Nível 0</button>
+    <button class="tab-btn" onclick="switchTab('validacao')">④ Validação</button>
+    <button class="tab-btn" onclick="switchTab('desafio')">⑤ Desafio</button>
+  </nav>
+
+  <!-- ====== ELEMENTOS ====== -->
+  <div id="tab-elementos" class="section active">
+    <p class="sec-title">Identificação</p>
+    <h2 class="sec-heading">Elementos do DFD</h2>
+
+    <div class="legend">
+      <div class="legend-item"><div class="leg-box" style="border-color:var(--entity-border);background:#2d1f4e"></div> Entidade Externa</div>
+      <div class="legend-item"><div class="leg-circle" style="border-color:var(--process-border);background:#1e3a5f"></div> Processo</div>
+      <div class="legend-item"><div class="leg-box" style="border-color:var(--store-border);background:#1f3d2e;border-radius:0;border-top:none;border-bottom:none"></div> Depósito de Dados</div>
+      <div class="legend-item"><div class="leg-box" style="border-color:var(--accent);background:#3a2e00"></div> Fluxo de Dados</div>
+    </div>
+
+    <div class="elements-grid">
+      <!-- Entidades -->
+      <div class="el-card entity">
+        <div class="el-type">Entidade Externa</div>
+        <div class="el-name">Cliente</div>
+        <div class="el-desc">Aluno ou professor que realiza o pedido e efetua o pagamento na cantina.</div>
+        <span class="el-badge">E1</span>
+      </div>
+      <div class="el-card entity">
+        <div class="el-type">Entidade Externa</div>
+        <div class="el-name">Atendente</div>
+        <div class="el-desc">Funcionário que registra o pedido no sistema a partir da solicitação do cliente.</div>
+        <span class="el-badge">E2</span>
+      </div>
+      <div class="el-card entity">
+        <div class="el-type">Entidade Externa</div>
+        <div class="el-name">Gerente</div>
+        <div class="el-desc">Responsável pela cantina; recebe o relatório de vendas ao final do dia.</div>
+        <span class="el-badge">E3</span>
+      </div>
+
+      <!-- Processos -->
+      <div class="el-card process">
+        <div class="el-type">Processo</div>
+        <div class="el-name">Registrar Pedido</div>
+        <div class="el-desc">Recebe os itens solicitados pelo cliente e armazena o pedido no sistema.</div>
+        <span class="el-badge">P1</span>
+      </div>
+      <div class="el-card process">
+        <div class="el-type">Processo</div>
+        <div class="el-name">Calcular Total</div>
+        <div class="el-desc">Consulta os preços no cadastro de produtos e calcula o valor total do pedido.</div>
+        <span class="el-badge">P2</span>
+      </div>
+      <div class="el-card process">
+        <div class="el-type">Processo</div>
+        <div class="el-name">Processar Pagamento</div>
+        <div class="el-desc">Recebe o pagamento do cliente e confirma ou rejeita a transação.</div>
+        <span class="el-badge">P3</span>
+      </div>
+      <div class="el-card process">
+        <div class="el-type">Processo</div>
+        <div class="el-name">Registrar Venda</div>
+        <div class="el-desc">Persiste a venda confirmada no depósito de registros de vendas.</div>
+        <span class="el-badge">P4</span>
+      </div>
+      <div class="el-card process">
+        <div class="el-type">Processo</div>
+        <div class="el-name">Emitir Relatório</div>
+        <div class="el-desc">Lê o registro de vendas e gera o relatório diário para o gerente.</div>
+        <span class="el-badge">P5</span>
+      </div>
+
+      <!-- Depósitos -->
+      <div class="el-card store">
+        <div class="el-type">Depósito de Dados</div>
+        <div class="el-name">Cadastro de Produtos</div>
+        <div class="el-desc">Armazena nome, preço e quantidade disponível de cada produto da cantina.</div>
+        <span class="el-badge">D1</span>
+      </div>
+      <div class="el-card store">
+        <div class="el-type">Depósito de Dados</div>
+        <div class="el-name">Registro de Vendas</div>
+        <div class="el-desc">Guarda todos os dados das vendas concluídas: itens, valores e horários.</div>
+        <span class="el-badge">D2</span>
+      </div>
+
+      <!-- Fluxos relevantes -->
+      <div class="el-card flow">
+        <div class="el-type">Fluxo de Dados</div>
+        <div class="el-name">Dados do Pedido</div>
+        <div class="el-desc">Itens desejados informados pelo cliente / atendente ao sistema.</div>
+        <span class="el-badge">F1</span>
+      </div>
+      <div class="el-card flow">
+        <div class="el-type">Fluxo de Dados</div>
+        <div class="el-name">Valor Total</div>
+        <div class="el-desc">Valor calculado enviado ao cliente para confirmação do pagamento.</div>
+        <span class="el-badge">F2</span>
+      </div>
+      <div class="el-card flow">
+        <div class="el-type">Fluxo de Dados</div>
+        <div class="el-name">Dados do Pagamento</div>
+        <div class="el-desc">Forma e confirmação do pagamento enviados pelo cliente ao sistema.</div>
+        <span class="el-badge">F3</span>
+      </div>
+      <div class="el-card flow">
+        <div class="el-type">Fluxo de Dados</div>
+        <div class="el-name">Relatório de Vendas</div>
+        <div class="el-desc">Relatório diário consolidado entregue ao gerente pelo sistema.</div>
+        <span class="el-badge">F4</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== CONTEXTO ====== -->
+  <div id="tab-contexto" class="section">
+    <p class="sec-title">DFD — Nível de Contexto</p>
+    <h2 class="sec-heading">Diagrama de Contexto</h2>
+    <p class="hint">// Visão macro: sistema como caixa-preta com entidades e fluxos principais</p>
+
+    <div class="diagram-wrap">
+      <svg width="760" height="400" viewBox="0 0 760 400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" markerWidth="9" markerHeight="6" refX="9" refY="3" orient="auto">
+            <polygon points="0 0, 9 3, 0 6" fill="#6b7280"/>
+          </marker>
+          <marker id="arrow-accent" markerWidth="9" markerHeight="6" refX="9" refY="3" orient="auto">
+            <polygon points="0 0, 9 3, 0 6" fill="#f5c842"/>
+          </marker>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Central process -->
+        <circle cx="380" cy="200" r="72" fill="#1e3a5f" stroke="#4da6ff" stroke-width="2.5" filter="url(#glow)"/>
+        <text x="380" y="193" text-anchor="middle" fill="#e8eaf0" font-family="Syne,sans-serif" font-size="13" font-weight="700">Sistema de</text>
+        <text x="380" y="210" text-anchor="middle" fill="#e8eaf0" font-family="Syne,sans-serif" font-size="13" font-weight="700">Cantina</text>
+        <text x="380" y="227" text-anchor="middle" fill="#4da6ff" font-family="Space Mono,monospace" font-size="10">Escolar</text>
+
+        <!-- Entities -->
+        <!-- Cliente -->
+        <rect x="22" y="165" width="110" height="54" rx="6" fill="#2d1f4e" stroke="#a78bfa" stroke-width="2"/>
+        <text x="77" y="189" text-anchor="middle" fill="#e8eaf0" font-family="Syne,sans-serif" font-size="13" font-weight="600">Cliente</text>
+        <text x="77" y="207" text-anchor="middle" fill="#a78bfa" font-family="Space Mono,monospace" font-size="10">E1</text>
+
+        <!-- Atendente -->
+        <rect x="22" y="60" width="110" height="54" rx="6" fill="#2d1f4e" stroke="#a78bfa" stroke-width="2"/>
+        <text x="77" y="84" text-anchor="middle" fill="#e8eaf0" font-family="Syne,sans-serif" font-size="13" font-weight="600">Atendente</text>
+        <text x="77" y="102" text-anchor="middle" fill="#a78bfa" font-family="Space Mono,monospace" font-size="10">E2</text>
+
+        <!-- Gerente -->
+        <rect x="628" y="165" width="110" height="54" rx="6" fill="#2d1f4e" stroke="#a78bfa" stroke-width="2"/>
+        <text x="683" y="189" text-anchor="middle" fill="#e8eaf0" font-family="Syne,sans-serif" font-size="13" font-weight="600">Gerente</text>
+        <text x="683" y="207" text-anchor="middle" fill="#a78bfa" font-family="Space Mono,monospace" font-size="10">E3</text>
+
+        <!-- ARROWS -->
+        <!-- Atendente → Sistema (dados pedido) -->
+        <line x1="132" y1="97" x2="300" y2="175" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="155" y="105" width="118" height="22" rx="4" fill="#13161e" opacity="0.9"/>
+        <text x="214" y="120" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="10">Dados do Pedido</text>
+
+        <!-- Cliente → Sistema (pagamento) -->
+        <line x1="132" y1="192" x2="308" y2="200" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="155" y="177" width="122" height="22" rx="4" fill="#13161e" opacity="0.9"/>
+        <text x="216" y="192" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="10">Dados Pagamento</text>
+
+        <!-- Sistema → Cliente (valor total) -->
+        <line x1="308" y1="215" x2="132" y2="222" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="148" y="218" width="106" height="22" rx="4" fill="#13161e" opacity="0.9"/>
+        <text x="201" y="233" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="10">Valor Total</text>
+
+        <!-- Sistema → Gerente (relatório) -->
+        <line x1="452" y1="200" x2="628" y2="192" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <rect x="464" y="177" width="122" height="22" rx="4" fill="#13161e" opacity="0.9"/>
+        <text x="525" y="192" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="10">Relatório de Vendas</text>
+
+        <!-- Sistema → Cliente (comprovante) -->
+        <line x1="390" y1="272" x2="250" y2="340" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+        <rect x="270" y="318" width="116" height="22" rx="4" fill="#13161e" opacity="0.9"/>
+        <text x="328" y="333" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="10">Comprovante</text>
+
+        <!-- Labels de borda -->
+        <text x="380" y="380" text-anchor="middle" fill="#3d4455" font-family="Space Mono,monospace" font-size="10">DIAGRAMA DE CONTEXTO — DFD NÍVEL 0 ABSTRAÍDO</text>
+      </svg>
+    </div>
+
+    <div class="explanation">
+      O diagrama de contexto representa o <strong>Sistema de Cantina Escolar</strong> como um único processo central. As três entidades externas — <strong>Cliente</strong> (E1), <strong>Atendente</strong> (E2) e <strong>Gerente</strong> (E3) — interagem com o sistema por meio de fluxos de dados bem definidos: o atendente insere os dados do pedido, o cliente fornece o pagamento e recebe o valor total e o comprovante, e o gerente recebe o relatório diário de vendas. Nenhuma entidade se comunica diretamente com outra.
+    </div>
+  </div>
+
+  <!-- ====== NÍVEL 0 ====== -->
+  <div id="tab-nivel0" class="section">
+    <p class="sec-title">DFD — Nível 0</p>
+    <h2 class="sec-heading">Detalhamento dos Processos</h2>
+    <p class="hint">// Sistema decomposto em 5 processos internos com depósitos de dados</p>
+
+    <div class="diagram-wrap">
+      <svg width="900" height="580" viewBox="0 0 900 580" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="a2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0,8 3,0 6" fill="#6b7280"/>
+          </marker>
+        </defs>
+
+        <!-- === ENTITIES === -->
+        <!-- Cliente E1 -->
+        <rect x="14" y="250" width="100" height="48" rx="5" fill="#2d1f4e" stroke="#a78bfa" stroke-width="2"/>
+        <text x="64" y="271" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="12" font-weight="600">Cliente</text>
+        <text x="64" y="288" text-anchor="middle" fill="#a78bfa" font-family="Space Mono,monospace" font-size="9">E1</text>
+
+        <!-- Atendente E2 -->
+        <rect x="14" y="50" width="100" height="48" rx="5" fill="#2d1f4e" stroke="#a78bfa" stroke-width="2"/>
+        <text x="64" y="71" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="12" font-weight="600">Atendente</text>
+        <text x="64" y="88" text-anchor="middle" fill="#a78bfa" font-family="Space Mono,monospace" font-size="9">E2</text>
+
+        <!-- Gerente E3 -->
+        <rect x="786" y="450" width="100" height="48" rx="5" fill="#2d1f4e" stroke="#a78bfa" stroke-width="2"/>
+        <text x="836" y="471" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="12" font-weight="600">Gerente</text>
+        <text x="836" y="488" text-anchor="middle" fill="#a78bfa" font-family="Space Mono,monospace" font-size="9">E3</text>
+
+        <!-- === PROCESSES === -->
+        <!-- P1 Registrar Pedido -->
+        <circle cx="230" cy="74" r="52" fill="#1e3a5f" stroke="#4da6ff" stroke-width="2"/>
+        <text x="230" y="68" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="11" font-weight="700">Registrar</text>
+        <text x="230" y="82" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="11" font-weight="700">Pedido</text>
+        <text x="230" y="97" text-anchor="middle" fill="#4da6ff" font-family="Space Mono,monospace" font-size="9">P1</text>
+
+        <!-- P2 Calcular Total -->
+        <circle cx="450" cy="74" r="52" fill="#1e3a5f" stroke="#4da6ff" stroke-width="2"/>
+        <text x="450" y="68" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="11" font-weight="700">Calcular</text>
+        <text x="450" y="82" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="11" font-weight="700">Total</text>
+        <text x="450" y="97" text-anchor="middle" fill="#4da6ff" font-family="Space Mono,monospace" font-size="9">P2</text>
+
+        <!-- P3 Processar Pagamento -->
+        <circle cx="230" cy="290" r="52" fill="#1e3a5f" stroke="#4da6ff" stroke-width="2"/>
+        <text x="230" y="282" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="10" font-weight="700">Processar</text>
+        <text x="230" y="295" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="10" font-weight="700">Pagamento</text>
+        <text x="230" y="311" text-anchor="middle" fill="#4da6ff" font-family="Space Mono,monospace" font-size="9">P3</text>
+
+        <!-- P4 Registrar Venda -->
+        <circle cx="450" cy="380" r="52" fill="#1e3a5f" stroke="#4da6ff" stroke-width="2"/>
+        <text x="450" y="374" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="11" font-weight="700">Registrar</text>
+        <text x="450" y="388" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="11" font-weight="700">Venda</text>
+        <text x="450" y="404" text-anchor="middle" fill="#4da6ff" font-family="Space Mono,monospace" font-size="9">P4</text>
+
+        <!-- P5 Emitir Relatório -->
+        <circle cx="680" cy="474" r="52" fill="#1e3a5f" stroke="#4da6ff" stroke-width="2"/>
+        <text x="680" y="468" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="11" font-weight="700">Emitir</text>
+        <text x="680" y="482" text-anchor="middle" fill="#fff" font-family="Syne,sans-serif" font-size="11" font-weight="700">Relatório</text>
+        <text x="680" y="498" text-anchor="middle" fill="#4da6ff" font-family="Space Mono,monospace" font-size="9">P5</text>
+
+        <!-- === DATA STORES === -->
+        <!-- D1 Cadastro de Produtos -->
+        <line x1="340" y1="165" x2="560" y2="165" stroke="#4ecdc4" stroke-width="2"/>
+        <line x1="340" y1="185" x2="560" y2="185" stroke="#4ecdc4" stroke-width="2"/>
+        <rect x="340" y="165" width="220" height="20" fill="#1f3d2e"/>
+        <text x="380" y="180" fill="#4ecdc4" font-family="Space Mono,monospace" font-size="10">D1</text>
+        <text x="460" y="180" text-anchor="middle" fill="#e8eaf0" font-family="Syne,sans-serif" font-size="11" font-weight="600">Cadastro de Produtos</text>
+
+        <!-- D2 Registro de Vendas -->
+        <line x1="340" y1="470" x2="560" y2="470" stroke="#4ecdc4" stroke-width="2"/>
+        <line x1="340" y1="490" x2="560" y2="490" stroke="#4ecdc4" stroke-width="2"/>
+        <rect x="340" y="470" width="220" height="20" fill="#1f3d2e"/>
+        <text x="380" y="485" fill="#4ecdc4" font-family="Space Mono,monospace" font-size="10">D2</text>
+        <text x="460" y="485" text-anchor="middle" fill="#e8eaf0" font-family="Syne,sans-serif" font-size="11" font-weight="600">Registro de Vendas</text>
+
+        <!-- === ARROWS === -->
+
+        <!-- Atendente → P1 -->
+        <line x1="114" y1="74" x2="178" y2="74" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a2)"/>
+        <text x="146" y="66" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="9">Dados Pedido</text>
+
+        <!-- P1 → P2 -->
+        <line x1="282" y1="74" x2="398" y2="74" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a2)"/>
+        <text x="340" y="65" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="9">Itens do Pedido</text>
+
+        <!-- P2 ↔ D1 (consulta preços) -->
+        <line x1="450" y1="126" x2="450" y2="165" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a2)"/>
+        <line x1="430" y1="165" x2="430" y2="126" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a2)"/>
+        <text x="468" y="149" fill="#f5c842" font-family="Space Mono,monospace" font-size="9">Preços</text>
+
+        <!-- P2 → Cliente (valor total) -->
+        <line x1="400" y1="90" x2="160" y2="260" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a2)"/>
+        <rect x="240" y="155" width="92" height="18" rx="3" fill="#0d0f14" opacity=".9"/>
+        <text x="286" y="167" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="9">Valor Total</text>
+
+        <!-- Cliente → P3 (pagamento) -->
+        <line x1="114" y1="284" x2="178" y2="284" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a2)"/>
+        <text x="146" y="276" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="9">Pagamento</text>
+
+        <!-- P3 → P4 (venda confirmada) -->
+        <line x1="270" y1="320" x2="410" y2="358" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a2)"/>
+        <rect x="295" y="333" width="104" height="18" rx="3" fill="#0d0f14" opacity=".9"/>
+        <text x="347" y="345" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="9">Venda Confirmada</text>
+
+        <!-- P4 → D2 -->
+        <line x1="450" y1="432" x2="450" y2="470" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a2)"/>
+        <text x="460" y="455" fill="#f5c842" font-family="Space Mono,monospace" font-size="9">Dados Venda</text>
+
+        <!-- D2 → P5 -->
+        <line x1="560" y1="480" x2="628" y2="480" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a2)"/>
+        <text x="594" y="473" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="9">Vendas do Dia</text>
+
+        <!-- P5 → Gerente -->
+        <line x1="732" y1="474" x2="786" y2="474" stroke="#6b7280" stroke-width="1.5" marker-end="url(#a2)"/>
+        <text x="759" y="466" text-anchor="middle" fill="#f5c842" font-family="Space Mono,monospace" font-size="9">Relatório</text>
+
+        <!-- P4 ↔ D1 (baixa estoque) -->
+        <line x1="398" y1="370" x2="530" y2="185" stroke="#6b7280" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a2)"/>
+        <rect x="500" y="265" width="82" height="18" rx="3" fill="#0d0f14" opacity=".9"/>
+        <text x="541" y="277" text-anchor="middle" fill="#6b7280" font-family="Space Mono,monospace" font-size="9">Atualiza Qtde</text>
+
+        <!-- P3 → Cliente comprovante -->
+        <line x1="184" y1="308" x2="114" y2="302" stroke="#6b7280" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#a2)"/>
+        <text x="152" y="318" text-anchor="middle" fill="#6b7280" font-family="Space Mono,monospace" font-size="9">Comprovante</text>
+
+        <!-- label -->
+        <text x="450" y="560" text-anchor="middle" fill="#3d4455" font-family="Space Mono,monospace" font-size="9">DFD NÍVEL 0 — SISTEMA DE CANTINA ESCOLAR</text>
+      </svg>
+    </div>
+
+    <div class="explanation">
+      No DFD Nível 0, o sistema é decomposto em <strong>cinco processos principais</strong>. O <strong>Atendente</strong> insere os dados do pedido em <em>P1 – Registrar Pedido</em>, que repassa os itens a <em>P2 – Calcular Total</em>. Este consulta preços em <strong>D1 – Cadastro de Produtos</strong> e devolve o valor total ao <strong>Cliente</strong>. O cliente efetua o pagamento em <em>P3 – Processar Pagamento</em>, que, ao confirmar, aciona <em>P4 – Registrar Venda</em>, gravando a transação em <strong>D2 – Registro de Vendas</strong>. Por fim, <em>P5 – Emitir Relatório</em> lê D2 e entrega o relatório diário ao <strong>Gerente</strong>.
+    </div>
+  </div>
+
+  <!-- ====== VALIDAÇÃO ====== -->
+  <div id="tab-validacao" class="section">
+    <p class="sec-title">Checklist</p>
+    <h2 class="sec-heading">Validação do Diagrama</h2>
+    <ul class="validation-list">
+      <li><span class="val-icon val-ok"></span><div><strong>Todos os processos têm entrada e saída</strong> — P1 recebe dados do pedido e emite itens; P2 recebe itens e emite valor; P3 recebe pagamento e emite confirmação; P4 recebe venda e grava em D2; P5 lê D2 e emite relatório.</div></li>
+      <li><span class="val-icon val-ok"></span><div><strong>Não existem fluxos sem origem ou destino</strong> — todos os fluxos partem de um processo/entidade e chegam a outro processo/entidade/depósito.</div></li>
+      <li><span class="val-icon val-ok"></span><div><strong>Nomes no padrão verbo + objeto</strong> — Registrar Pedido, Calcular Total, Processar Pagamento, Registrar Venda, Emitir Relatório.</div></li>
+      <li><span class="val-icon val-ok"></span><div><strong>Sem ligações diretas entre entidades externas</strong> — Cliente, Atendente e Gerente nunca se comunicam diretamente; toda troca passa por um processo do sistema.</div></li>
+      <li><span class="val-icon val-ok"></span><div><strong>Depósitos de dados acessados apenas por processos</strong> — D1 e D2 recebem/fornecem dados exclusivamente por meio de P2, P4 e P5.</div></li>
+      <li><span class="val-icon val-ok"></span><div><strong>Diagrama de contexto consistente com Nível 0</strong> — todos os fluxos externos do contexto aparecem nos processos de fronteira do DFD Nível 0 (balanceamento de dados).</div></li>
+    </ul>
+  </div>
+
+  <!-- ====== DESAFIO ====== -->
+  <div id="tab-desafio" class="section">
+    <p class="sec-title">Opcional</p>
+    <h2 class="sec-heading">Extensões do Desafio</h2>
+
+    <div class="challenge-card">
+      <h3>📦 Controle de Estoque Automático</h3>
+      <p>Adicionar processo <strong>P6 – Atualizar Estoque</strong> que, ao confirmar uma venda em P4, decrementa automaticamente a quantidade disponível em D1 – Cadastro de Produtos. Um novo fluxo de alerta pode ser gerado ao Atendente quando o estoque atingir o limite mínimo, e um novo depósito <strong>D3 – Alertas de Estoque</strong> pode registrar esses eventos.</p>
+      <span class="challenge-tag">Novo processo P6 + fluxo de alerta</span>
+    </div>
+
+    <div class="challenge-card">
+      <h3>🏷️ Promoções e Descontos</h3>
+      <p>Criar depósito <strong>D3 – Tabela de Promoções</strong> (código, percentual, validade) e adaptar <strong>P2 – Calcular Total</strong> para consultá-lo antes de emitir o valor final. O fluxo passa a ser: P2 consulta D1 (preços) → consulta D3 (promoções) → aplica desconto → emite valor com desconto ao cliente.</p>
+      <span class="challenge-tag">Novo depósito D3 + lógica em P2</span>
+    </div>
+
+    <div class="challenge-card">
+      <h3>💳 Pagamento via PIX / Cartão</h3>
+      <p>Detalhar <strong>P3 – Processar Pagamento</strong> em subprocessos (DFD Nível 1): P3.1 Selecionar Forma de Pagamento, P3.2 Processar PIX, P3.3 Processar Cartão. Incluir entidade externa <strong>Gateway de Pagamento</strong> que troca fluxos de autorização e confirmação com P3.2 e P3.3, tornando o modelo preparado para integração com meios digitais.</p>
+      <span class="challenge-tag">DFD Nível 1 de P3 + nova entidade</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
